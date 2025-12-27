@@ -9,10 +9,17 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # iTerm2 preferences plist path
 ITERM2_PLIST="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
+
+# Variables to store user selections
+SELECTED_FONT=""
+SELECTED_FONT_SIZE=""
+SELECTED_THEME=""
 
 echo -e "${GREEN}Starting iTerm2 configuration...${NC}"
 
@@ -49,6 +56,191 @@ set_nested_preference() {
     # Use PlistBuddy to set nested values
     /usr/libexec/PlistBuddy -c "Set :$key_path $value" "$ITERM2_PLIST" 2>/dev/null || \
     /usr/libexec/PlistBuddy -c "Add :$key_path $type $value" "$ITERM2_PLIST" 2>/dev/null || true
+}
+
+# Function to display font selection menu
+select_font() {
+    echo -e "\n${CYAN}=== Font Selection ===${NC}"
+    echo -e "${YELLOW}Please select a font:${NC}"
+    echo "  1) Monaco (Classic macOS)"
+    echo "  2) Menlo (Modern macOS)"
+    echo "  3) Meslo LG (Powerline-friendly)"
+    echo "  4) Fira Code (Ligatures)"
+    echo "  5) Source Code Pro (Adobe)"
+    echo "  6) JetBrains Mono (Modern)"
+    echo "  7) Courier New (Classic)"
+    echo "  8) Consolas (Windows-style)"
+    echo "  9) Inconsolata (Clean)"
+    echo " 10) Custom (enter font name)"
+    
+    read -p "Enter your choice [1-10]: " font_choice
+    
+    case $font_choice in
+        1) SELECTED_FONT="Monaco" ;;
+        2) SELECTED_FONT="Menlo" ;;
+        3) SELECTED_FONT="MesloLG" ;;
+        4) SELECTED_FONT="FiraCode" ;;
+        5) SELECTED_FONT="SourceCodePro" ;;
+        6) SELECTED_FONT="JetBrainsMono" ;;
+        7) SELECTED_FONT="Courier New" ;;
+        8) SELECTED_FONT="Consolas" ;;
+        9) SELECTED_FONT="Inconsolata" ;;
+        10) 
+            read -p "Enter custom font name: " SELECTED_FONT
+            ;;
+        *)
+            echo -e "${RED}Invalid choice. Using default: Monaco${NC}"
+            SELECTED_FONT="Monaco"
+            ;;
+    esac
+    
+    echo -e "${GREEN}Selected font: ${SELECTED_FONT}${NC}"
+}
+
+# Function to display text size selection menu
+select_text_size() {
+    echo -e "\n${CYAN}=== Text Size Selection ===${NC}"
+    echo -e "${YELLOW}Please select text size:${NC}"
+    echo "  1) 10pt (Small)"
+    echo "  2) 11pt"
+    echo "  3) 12pt (Default)"
+    echo "  4) 13pt"
+    echo "  5) 14pt (Medium)"
+    echo "  6) 16pt (Large)"
+    echo "  7) 18pt (Extra Large)"
+    echo "  8) Custom (enter size)"
+    
+    read -p "Enter your choice [1-8]: " size_choice
+    
+    case $size_choice in
+        1) SELECTED_FONT_SIZE="10" ;;
+        2) SELECTED_FONT_SIZE="11" ;;
+        3) SELECTED_FONT_SIZE="12" ;;
+        4) SELECTED_FONT_SIZE="13" ;;
+        5) SELECTED_FONT_SIZE="14" ;;
+        6) SELECTED_FONT_SIZE="16" ;;
+        7) SELECTED_FONT_SIZE="18" ;;
+        8) 
+            read -p "Enter custom font size (e.g., 15): " SELECTED_FONT_SIZE
+            if ! [[ "$SELECTED_FONT_SIZE" =~ ^[0-9]+$ ]]; then
+                echo -e "${RED}Invalid size. Using default: 12${NC}"
+                SELECTED_FONT_SIZE="12"
+            fi
+            ;;
+        *)
+            echo -e "${RED}Invalid choice. Using default: 12${NC}"
+            SELECTED_FONT_SIZE="12"
+            ;;
+    esac
+    
+    echo -e "${GREEN}Selected text size: ${SELECTED_FONT_SIZE}pt${NC}"
+}
+
+# Function to display theme selection menu
+select_theme() {
+    echo -e "\n${CYAN}=== Theme/Color Scheme Selection ===${NC}"
+    echo -e "${YELLOW}Please select a color theme:${NC}"
+    echo "  1) Default (Light)"
+    echo "  2) Dark Background"
+    echo "  3) Solarized Dark"
+    echo "  4) Solarized Light"
+    echo "  5) Tomorrow Night"
+    echo "  6) Tomorrow Night Eighties"
+    echo "  7) Tomorrow Night Blue"
+    echo "  8) Dracula"
+    echo "  9) One Dark"
+    echo " 10) Gruvbox Dark"
+    echo " 11) Nord"
+    echo " 12) Material Design"
+    echo " 13) Monokai"
+    echo " 14) Pastel (Dark Background)"
+    echo " 15) Tango Dark"
+    echo " 16) Custom (enter theme name)"
+    
+    read -p "Enter your choice [1-16]: " theme_choice
+    
+    case $theme_choice in
+        1) SELECTED_THEME="Default" ;;
+        2) SELECTED_THEME="Dark Background" ;;
+        3) SELECTED_THEME="Solarized Dark" ;;
+        4) SELECTED_THEME="Solarized Light" ;;
+        5) SELECTED_THEME="Tomorrow Night" ;;
+        6) SELECTED_THEME="Tomorrow Night Eighties" ;;
+        7) SELECTED_THEME="Tomorrow Night Blue" ;;
+        8) SELECTED_THEME="Dracula" ;;
+        9) SELECTED_THEME="One Dark" ;;
+        10) SELECTED_THEME="Gruvbox Dark" ;;
+        11) SELECTED_THEME="Nord" ;;
+        12) SELECTED_THEME="Material Design" ;;
+        13) SELECTED_THEME="Monokai" ;;
+        14) SELECTED_THEME="Pastel (Dark Background)" ;;
+        15) SELECTED_THEME="Tango Dark" ;;
+        16) 
+            read -p "Enter custom theme name: " SELECTED_THEME
+            ;;
+        *)
+            echo -e "${RED}Invalid choice. Using default: Dark Background${NC}"
+            SELECTED_THEME="Dark Background"
+            ;;
+    esac
+    
+    echo -e "${GREEN}Selected theme: ${SELECTED_THEME}${NC}"
+}
+
+# Function to apply font settings to default profile
+apply_font_settings() {
+    if [ -z "$SELECTED_FONT" ] || [ -z "$SELECTED_FONT_SIZE" ]; then
+        echo -e "${YELLOW}Skipping font settings (not selected)${NC}"
+        return
+    fi
+    
+    echo -e "\n${GREEN}=== Applying Font Settings ===${NC}"
+    
+    local font_string="${SELECTED_FONT} ${SELECTED_FONT_SIZE}"
+    
+    # Get the default profile GUID
+    local default_profile_guid=$(/usr/libexec/PlistBuddy -c "Print :\"New Bookmarks\":0:\"Guid\"" "$ITERM2_PLIST" 2>/dev/null || echo "")
+    
+    if [ -z "$default_profile_guid" ]; then
+        # Try to get the first profile GUID
+        default_profile_guid=$(/usr/libexec/PlistBuddy -c "Print :\"New Bookmarks\":0:\"Guid\"" "$ITERM2_PLIST" 2>/dev/null || echo "")
+    fi
+    
+    if [ -n "$default_profile_guid" ]; then
+        # Apply to specific profile
+        set_nested_preference "New Bookmarks:0:Normal Font" "$font_string" "string" || true
+        set_nested_preference "New Bookmarks:0:Non Ascii Font" "$font_string" "string" || true
+    else
+        # Apply to default profile (index 0)
+        set_nested_preference "New Bookmarks:0:Normal Font" "$font_string" "string" || true
+        set_nested_preference "New Bookmarks:0:Non Ascii Font" "$font_string" "string" || true
+    fi
+    
+    echo -e "${GREEN}Font set to: ${font_string}${NC}"
+}
+
+# Function to apply theme/color scheme
+apply_theme() {
+    if [ -z "$SELECTED_THEME" ]; then
+        echo -e "${YELLOW}Skipping theme settings (not selected)${NC}"
+        return
+    fi
+    
+    echo -e "\n${GREEN}=== Applying Theme ===${NC}"
+    
+    # iTerm2 stores color schemes in a complex structure
+    # We'll set the color preset name in the profile
+    # Note: The theme must exist in iTerm2's color presets
+    
+    # Try to find the profile and set the color preset
+    local color_preset_name="$SELECTED_THEME"
+    
+    # Apply to default profile
+    set_nested_preference "New Bookmarks:0:\"Color Preset Name\"" "$color_preset_name" "string" || true
+    
+    echo -e "${GREEN}Theme set to: ${SELECTED_THEME}${NC}"
+    echo -e "${YELLOW}Note: If the theme doesn't appear, you may need to import it first through iTerm2's preferences.${NC}"
+    echo -e "${YELLOW}You can download themes from: https://iterm2colorschemes.com/${NC}"
 }
 
 echo -e "\n${GREEN}=== General Preferences ===${NC}"
@@ -96,27 +288,20 @@ set_preference "SyncTitle" "0" "bool"
 set_preference "CloseSessionsOnEnd" "1" "bool"
 set_preference "PromptOnQuit" "1" "bool"
 
-echo -e "\n${GREEN}=== Font Settings ===${NC}"
+echo -e "\n${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}  Interactive Configuration${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
 
-# Font configuration (using nested preferences)
-# Note: Font settings are typically in profile configurations
-# This sets a default font family and size
-set_nested_preference "New Bookmarks:0:Normal Font" "Monaco 12" "string" || true
-set_nested_preference "New Bookmarks:0:Non Ascii Font" "Monaco 12" "string" || true
-set_nested_preference "New Bookmarks:0:UseNonAsciiFont" "0" "bool" || true
+# Interactive selections
+select_font
+select_text_size
+select_theme
 
 echo -e "\n${GREEN}=== Keyboard Settings ===${NC}"
 
 # Keyboard shortcuts (these are complex nested structures)
 # Note: Keyboard shortcuts are stored in a complex format
 # For advanced keyboard customization, consider using iTerm2's GUI or Python API
-
-echo -e "\n${GREEN}=== Color Scheme ===${NC}"
-
-# Color scheme settings (stored in profiles)
-# Default color presets are available, but custom schemes require profile editing
-echo -e "${YELLOW}Note: Color schemes are typically configured per-profile.${NC}"
-echo -e "${YELLOW}Consider using iTerm2's built-in color presets or custom profile settings.${NC}"
 
 echo -e "\n${GREEN}=== Advanced Settings ===${NC}"
 
@@ -146,6 +331,10 @@ set_nested_preference "New Bookmarks:0:BlinkAllowed" "1" "bool" || true
 set_nested_preference "New Bookmarks:0:UseItalicFont" "1" "bool" || true
 set_nested_preference "New Bookmarks:0:AmbiguousDoubleWidth" "0" "bool" || true
 set_nested_preference "New Bookmarks:0:UnicodeVersion" "9" "int" || true
+
+# Apply user-selected font and theme
+apply_font_settings
+apply_theme
 
 echo -e "\n${GREEN}=== Notification Settings ===${NC}"
 
